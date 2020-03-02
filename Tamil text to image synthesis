@@ -1,0 +1,94 @@
+from keras.models import Sequential
+from keras.layers import Convolution2D
+from keras.layers import MaxPooling2D
+from keras.layers import Flatten
+from keras.layers import Dense
+
+# Initialising the CNN
+classifier = Sequential()
+
+# Step 1 - Convolution
+classifier.add(Convolution2D(32, 3, 3, input_shape = (64, 64, 3), activation = 'relu'))
+
+# Step 2 - Pooling
+classifier.add(MaxPooling2D(pool_size = (2, 2)))
+
+# Adding a second convolutional layer
+classifier.add(Convolution2D(32, 3, 3, activation = 'relu'))
+classifier.add(MaxPooling2D(pool_size = (2, 2)))
+
+# Adding a second convolutional layer
+classifier.add(Convolution2D(32, 3, 3, activation = 'relu'))
+classifier.add(MaxPooling2D(pool_size = (2, 2)))
+
+# Step 3 - Flattening
+classifier.add(Flatten())
+
+# Step 4 - Full connection
+classifier.add(Dense(output_dim = 128, activation = 'relu'))
+classifier.add(Dense(output_dim = 1, activation = 'sigmoid'))
+
+# Compiling the CNN
+classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+
+# Part 2 - Fitting the CNN to the images
+
+from keras.preprocessing.image import ImageDataGenerator
+
+train_datagen = ImageDataGenerator(rescale = 1./255,
+                                   shear_range = 0.2,
+                                   zoom_range = 0.2,
+                                   horizontal_flip = True)
+
+test_datagen = ImageDataGenerator(rescale = 1./255)
+validation_datagen=ImageDataGenerator(rescale=1./255)
+
+training_set = train_datagen.flow_from_directory('DATASET/train',
+                                                 target_size = (64, 64),
+                                                 batch_size = 32,
+                                                 class_mode = 'binary')
+
+test_set = test_datagen.flow_from_directory('DATASET/test',
+                                            target_size = (64, 64),
+                                            batch_size = 32,
+                                            class_mode = 'binary')
+
+validation_set=test_datagen.flow_from_directory('DATASET/validation',target_size=(64,64),batch_size=32,class_mode='categorical')    
+
+classifier.fit_generator(training_set,
+                         samples_per_epoch = 2000,
+                         nb_epoch = 1,
+                         validation_data = test_set ,
+                         nb_val_samples = 2000)
+
+#prediction
+from PIL import Image
+image = Image.open(r"C:\Users\Rushvanth Bhaskar\.spyder-py3\DATASET\train\textimg\rose1.png")
+img = image.img_to_array(img)
+img = np.expand_dims(img, axis=0)
+#image = image * 1.0 / 64
+predicted = classifier.predict(img)
+classes=training_set.class_indices
+#print(classes)
+#print(predicted)
+predicted=list(predicted)
+#print(predicted)
+
+index=int(predicted[0][0])
+#print(index)
+gh=list(classes.keys())
+#print(gh[index])
+
+'''#searching for image in dataset      
+url='{}.jpg'.format(gh)
+print(url)
+
+#image retrieval
+import cv2
+img=cv2.imread(url)
+cv2.imshow("image",img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+
+
